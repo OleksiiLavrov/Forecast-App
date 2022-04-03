@@ -16,7 +16,7 @@
           <div class="location">
             {{ weather.name }}, {{ weather.sys.country }}
           </div>
-          <div class="date">{{ dateBuilder() }}</div>
+          <div class="date">{{ dateBuilder }}</div>
         </div>
 
         <div class="weather-box">
@@ -42,44 +42,10 @@ export default {
       weather: {},
     };
   },
-
-  methods: {
-    theme() {
-      if (
-        typeof this.weather.main != "undefined" &&
-        this.weather.main.temp > 16
-      ) {
-        return (this.warmTheme = true);
-      } else {
-        return (this.warmTheme = false);
-      }
-    },
-    check() {
-      if (typeof this.weather.main != "undefined") {
-        return (this.showWeather = true);
-      }
-    },
-    fetchWeather(e) {
-      if (e.key == "Enter") {
-        this.check();
-        fetch(
-          `${this.url_base}weather?q=${this.query}&units=metric&APPID=${this.api_key}`
-        )
-          .then((res) => {
-            return res.json();
-          })
-          .then(this.setResults);
-        this.theme();
-      }
-    },
-
-    setResults(results) {
-      this.weather = results;
-    },
-
-    dateBuilder() {
+  computed: {
+    dateBuilder: function () {
       let d = new Date();
-      let months = [
+      const months = [
         "January",
         "February",
         "March",
@@ -93,7 +59,7 @@ export default {
         "November",
         "December",
       ];
-      let days = [
+      const days = [
         "Sunday",
         "Monday",
         "Tuesday",
@@ -109,6 +75,26 @@ export default {
       let year = d.getFullYear();
 
       return `${day} ${date} ${month} ${year}`;
+    },
+  },
+  methods: {
+    check() {
+      if (!this.weather.main) {
+        this.showWeather = true;
+      }
+    },
+    async fetchWeather(e) {
+      if (e.key == "Enter") {
+        const response = await fetch(
+          `${this.url_base}weather?q=${this.query}&units=metric&APPID=${this.api_key}`
+        );
+        const weatherNow = await response.json();
+        this.check();
+        this.weather = weatherNow;
+        this.warmTheme = this.weather.main.temp > 16;
+      }
+
+      if (e.key !== "Enter") return;
     },
   },
 };
